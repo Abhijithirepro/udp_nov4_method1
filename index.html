@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remote Access Detection System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .card-title {
+            font-size: 1.4em;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-active {
+            background: #10b981;
+            box-shadow: 0 0 10px #10b981;
+        }
+
+        .status-warning {
+            background: #f59e0b;
+            box-shadow: 0 0 10px #f59e0b;
+        }
+
+        .status-danger {
+            background: #ef4444;
+            box-shadow: 0 0 10px #ef4444;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .metric-row:last-child {
+            border-bottom: none;
+        }
+
+        .metric-label {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .metric-value {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-weight: 500;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border-left: 4px solid #10b981;
+        }
+
+        .alert-warning {
+            background: #fef3c7;
+            color: #92400e;
+            border-left: 4px solid #f59e0b;
+        }
+
+        .alert-danger {
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid #ef4444;
+        }
+
+        .event-log {
+            max-height: 300px;
+            overflow-y: auto;
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .event-entry {
+            padding: 8px;
+            margin: 5px 0;
+            background: white;
+            border-radius: 5px;
+            border-left: 3px solid #667eea;
+        }
+
+        .event-time {
+            color: #666;
+            font-size: 0.85em;
+        }
+
+        .button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+
+        .button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .button-secondary {
+            background: #6b7280;
+        }
+
+        .controls {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+
+        .stat-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #764ba2;
+        }
+
+        .fingerprint-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .fingerprint-table td {
+            padding: 10px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .fingerprint-table td:first-child {
+            font-weight: 600;
+            color: #666;
+            width: 40%;
+        }
+
+        .fingerprint-table td:last-child {
+            color: #333;
+            word-break: break-word;
+        }
+
+        .risk-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .risk-low {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .risk-medium {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .risk-high {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🛡️ Remote Access Detection System</h1>
+            <p class="subtitle">Advanced Browser-Based Detection for Remote Desktop & Automation</p>
+        </header>
+
+        <div class="grid">
+            <!-- Behavioral Event Telemetry -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">⌨️ Behavioral Telemetry</h2>
+                    <div class="status-indicator status-active"></div>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-number" id="keyboardEvents">0</div>
+                        <div class="stat-label">Keyboard Events</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number" id="mouseEvents">0</div>
+                        <div class="stat-label">Mouse Events</div>
+                    </div>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Avg Key Interval</span>
+                    <span class="metric-value" id="avgKeyInterval">N/A</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Avg Mouse Interval</span>
+                    <span class="metric-value" id="avgMouseInterval">N/A</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Event Jitter</span>
+                    <span class="metric-value" id="eventJitter">N/A</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Burst Patterns Detected</span>
+                    <span class="metric-value" id="burstPatterns">0</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Automation Score</span>
+                    <span class="metric-value" id="automationScore">0%</span>
+                </div>
+                <div id="behaviorAlert"></div>
+            </div>
+
+            <!-- Browser Fingerprinting -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">🔍 Browser Fingerprint</h2>
+                    <div class="status-indicator status-active"></div>
+                </div>
+                <table class="fingerprint-table" id="fingerprintTable">
+                    <!-- Will be populated by JavaScript -->
+                </table>
+                <div style="margin-top: 20px;">
+                    <div class="metric-row">
+                        <span class="metric-label">Anomaly Score</span>
+                        <span class="metric-value" id="anomalyScore">0%</span>
+                    </div>
+                </div>
+                <div id="fingerprintAlert"></div>
+            </div>
+
+            <!-- Domain & API Detection -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">🌐 Domain & API Detection</h2>
+                    <div class="status-indicator" id="domainStatus"></div>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Current Domain</span>
+                    <span class="metric-value" id="currentDomain">N/A</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Protocol</span>
+                    <span class="metric-value" id="protocol">N/A</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Known RDP Domain</span>
+                    <span class="metric-value" id="isKnownDomain">Checking...</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Risk Level</span>
+                    <span class="metric-value" id="riskLevel">N/A</span>
+                </div>
+                <div id="domainAlert"></div>
+                <div style="margin-top: 15px;">
+                    <details>
+                        <summary style="cursor: pointer; color: #667eea; font-weight: 600;">View Known RDP Domains</summary>
+                        <div id="knownDomainsList" style="margin-top: 10px; font-size: 0.9em; color: #666;"></div>
+                    </details>
+                </div>
+            </div>
+
+            <!-- Event Log -->
+            <div class="card full-width">
+                <div class="card-header">
+                    <h2 class="card-title">📋 Detection Event Log</h2>
+                    <div class="status-indicator status-active"></div>
+                </div>
+                <div class="event-log" id="eventLog">
+                    <div class="event-entry">
+                        <span class="event-time">[System Started]</span> Detection system initialized and monitoring...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Overall Risk Assessment -->
+            <div class="card full-width">
+                <div class="card-header">
+                    <h2 class="card-title">⚠️ Overall Risk Assessment</h2>
+                    <div class="status-indicator" id="overallStatus"></div>
+                </div>
+                <div style="text-align: center; padding: 20px;">
+                    <h3 id="overallRiskText" style="font-size: 2em; margin-bottom: 10px;">Analyzing...</h3>
+                    <div id="overallRiskBadge"></div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="riskProgress" style="width: 0%"></div>
+                    </div>
+                    <p id="riskDescription" style="margin-top: 15px; color: #666;"></p>
+                </div>
+                <div id="overallAlert"></div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="button" onclick="resetAnalysis()">🔄 Reset Analysis</button>
+            <button class="button button-secondary" onclick="exportReport()">📊 Export Report</button>
+            <button class="button button-secondary" onclick="toggleMonitoring()">
+                <span id="monitoringButtonText">⏸️ Pause Monitoring</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // ==================== Global State ====================
+        let monitoringActive = true;
+        let keyboardEventTimestamps = [];
+        let mouseEventTimestamps = [];
+        let keyboardEventCount = 0;
+        let mouseEventCount = 0;
+        let burstPatternCount = 0;
+        let eventLog = [];
+
+        // Known remote desktop domains
+        const knownRDPDomains = [
+            'teamviewer.com',
+            'remotedesktop.google.com',
+            'anydesk.com',
+            'logmein.com',
+            'gotomypc.com',
+            'splashtop.com',
+            'chrome.google.com',
+            'parsec.app',
+            'nomachine.com',
+            'realvnc.com',
+            'tightvnc.com',
+            'ultravnc.com',
+            'remote.microsoft.com',
+            'join.me',
+            'screenconnect.com',
+            'bomgar.com',
+            'zoho.com/assist',
+            'dameware.com',
+            'remotepc.com'
+        ];
+
+        // ==================== Utility Functions ====================
+        function getCurrentTimestamp() {
+            return Date.now();
+        }
+
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleTimeString();
+        }
+
+        function addToEventLog(message, type = 'info') {
+            const timestamp = getCurrentTimestamp();
+            eventLog.push({ timestamp, message, type });
+            
+            const logElement = document.getElementById('eventLog');
+            const entry = document.createElement('div');
+            entry.className = 'event-entry';
+            entry.innerHTML = `<span class="event-time">[${formatTime(timestamp)}]</span> ${message}`;
+            
+            logElement.insertBefore(entry, logElement.firstChild);
+            
+            // Keep only last 50 entries
+            if (logElement.children.length > 50) {
+                logElement.removeChild(logElement.lastChild);
+            }
+        }
+
+        // ==================== 1. Behavioral Event Telemetry ====================
+        function calculateAverage(arr) {
+            if (arr.length === 0) return 0;
+            return arr.reduce((a, b) => a + b, 0) / arr.length;
+        }
+
+        function calculateStandardDeviation(arr, mean) {
+            if (arr.length === 0) return 0;
+            const squaredDiffs = arr.map(val => Math.pow(val - mean, 2));
+            return Math.sqrt(calculateAverage(squaredDiffs));
+        }
+
+        function detectBurstPattern(timestamps) {
+            if (timestamps.length < 5) return false;
+            
+            const recentEvents = timestamps.slice(-5);
+            const intervals = [];
+            
+            for (let i = 1; i < recentEvents.length; i++) {
+                intervals.push(recentEvents[i] - recentEvents[i - 1]);
+            }
+            
+            const avgInterval = calculateAverage(intervals);
+            
+            // Burst detected if average interval is very low (< 50ms) or very consistent (< 10ms std dev)
+            if (avgInterval < 50) {
+                return true;
+            }
+            
+            const stdDev = calculateStandardDeviation(intervals, avgInterval);
+            if (stdDev < 10 && intervals.length > 0) {
+                return true;
+            }
+            
+            return false;
+        }
+
+        function analyzeAutomation() {
+            if (keyboardEventTimestamps.length < 10 && mouseEventTimestamps.length < 10) {
+                return 0;
+            }
+            
+            let automationIndicators = 0;
+            let totalChecks = 0;
+            
+            // Check keyboard timing patterns
+            if (keyboardEventTimestamps.length >= 10) {
+                const keyIntervals = [];
+                for (let i = 1; i < keyboardEventTimestamps.length; i++) {
+                    keyIntervals.push(keyboardEventTimestamps[i] - keyboardEventTimestamps[i - 1]);
+                }
+                
+                const avgKeyInterval = calculateAverage(keyIntervals);
+                const stdDevKey = calculateStandardDeviation(keyIntervals, avgKeyInterval);
+                
+                // Very consistent timing (low std dev) suggests automation
+                if (stdDevKey < 15 && keyIntervals.length > 10) {
+                    automationIndicators++;
+                }
+                
+                // Extremely fast typing (< 50ms avg) suggests automation
+                if (avgKeyInterval < 50 && avgKeyInterval > 0) {
+                    automationIndicators++;
+                }
+                
+                totalChecks += 2;
+            }
+            
+            // Check mouse movement patterns
+            if (mouseEventTimestamps.length >= 10) {
+                const mouseIntervals = [];
+                for (let i = 1; i < mouseEventTimestamps.length; i++) {
+                    mouseIntervals.push(mouseEventTimestamps[i] - mouseEventTimestamps[i - 1]);
+                }
+                
+                const avgMouseInterval = calculateAverage(mouseIntervals);
+                const stdDevMouse = calculateStandardDeviation(mouseIntervals, avgMouseInterval);
+                
+                // Very consistent mouse movement suggests automation
+                if (stdDevMouse < 20 && mouseIntervals.length > 10) {
+                    automationIndicators++;
+                }
+                
+                totalChecks++;
+            }
+            
+            // Check for burst patterns
+            if (burstPatternCount > 3) {
+                automationIndicators++;
+                totalChecks++;
+            } else {
+                totalChecks++;
+            }
+            
+            return totalChecks > 0 ? Math.round((automationIndicators / totalChecks) * 100) : 0;
+        }
+
+        function updateBehavioralTelemetry() {
+            // Update event counts
+            document.getElementById('keyboardEvents').textContent = keyboardEventCount;
+            document.getElementById('mouseEvents').textContent = mouseEventCount;
+            
+            // Calculate and display keyboard intervals
+            if (keyboardEventTimestamps.length >= 2) {
+                const keyIntervals = [];
+                for (let i = 1; i < keyboardEventTimestamps.length; i++) {
+                    keyIntervals.push(keyboardEventTimestamps[i] - keyboardEventTimestamps[i - 1]);
+                }
+                const avgKeyInterval = calculateAverage(keyIntervals);
+                document.getElementById('avgKeyInterval').textContent = avgKeyInterval.toFixed(2) + ' ms';
+            }
+            
+            // Calculate and display mouse intervals
+            if (mouseEventTimestamps.length >= 2) {
+                const mouseIntervals = [];
+                for (let i = 1; i < mouseEventTimestamps.length; i++) {
+                    mouseIntervals.push(mouseEventTimestamps[i] - mouseEventTimestamps[i - 1]);
+                }
+                const avgMouseInterval = calculateAverage(mouseIntervals);
+                document.getElementById('avgMouseInterval').textContent = avgMouseInterval.toFixed(2) + ' ms';
+                
+                const mean = avgMouseInterval;
+                const stdDev = calculateStandardDeviation(mouseIntervals, mean);
+                document.getElementById('eventJitter').textContent = stdDev.toFixed(2) + ' ms';
+            }
+            
+            // Update burst patterns
+            document.getElementById('burstPatterns').textContent = burstPatternCount;
+            
+            // Calculate and display automation score
+            const automationScore = analyzeAutomation();
+            document.getElementById('automationScore').textContent = automationScore + '%';
+            
+            // Display warnings
+            const alertDiv = document.getElementById('behaviorAlert');
+            if (automationScore > 70) {
+                alertDiv.innerHTML = '<div class="alert alert-danger">⚠️ High automation probability detected!</div>';
+            } else if (automationScore > 40) {
+                alertDiv.innerHTML = '<div class="alert alert-warning">⚡ Moderate automation indicators present</div>';
+            } else if (automationScore > 0) {
+                alertDiv.innerHTML = '<div class="alert alert-success">✓ Behavior appears normal</div>';
+            }
+        }
+
+        // Event listeners for behavioral analysis
+        document.addEventListener('keydown', function(e) {
+            if (!monitoringActive) return;
+            
+            const timestamp = getCurrentTimestamp();
+            keyboardEventTimestamps.push(timestamp);
+            keyboardEventCount++;
+            
+            // Keep only last 100 events
+            if (keyboardEventTimestamps.length > 100) {
+                keyboardEventTimestamps.shift();
+            }
+            
+            // Check for burst pattern
+            if (detectBurstPattern(keyboardEventTimestamps)) {
+                burstPatternCount++;
+                addToEventLog('Keyboard burst pattern detected', 'warning');
+            }
+            
+            updateBehavioralTelemetry();
+        });
+
+        document.addEventListener('keyup', function(e) {
+            if (!monitoringActive) return;
+            
+            const timestamp = getCurrentTimestamp();
+            keyboardEventTimestamps.push(timestamp);
+            keyboardEventCount++;
+            
+            if (keyboardEventTimestamps.length > 100) {
+                keyboardEventTimestamps.shift();
+            }
+            
+            updateBehavioralTelemetry();
+        });
+
+        document.addEventListener('mousemove', function(e) {
+            if (!monitoringActive) return;
+            
+            const timestamp = getCurrentTimestamp();
+            
+            // Throttle mousemove events (only record every 100ms)
+            if (mouseEventTimestamps.length === 0 || 
+                timestamp - mouseEventTimestamps[mouseEventTimestamps.length - 1] > 100) {
+                mouseEventTimestamps.push(timestamp);
+                mouseEventCount++;
+                
+                if (mouseEventTimestamps.length > 100) {
+                    mouseEventTimestamps.shift();
+                }
+                
+                updateBehavioralTelemetry();
+            }
+        });
+
+        document.addEventListener('mousedown', function(e) {
+            if (!monitoringActive) return;
+            
+            const timestamp = getCurrentTimestamp();
+            mouseEventTimestamps.push(timestamp);
+            mouseEventCount++;
+            
+            if (mouseEventTimestamps.length > 100) {
+                mouseEventTimestamps.shift();
+            }
+            
+            if (detectBurstPattern(mouseEventTimestamps)) {
+                burstPatternCount++;
+                addToEventLog('Mouse click burst pattern detected', 'warning');
+            }
+            
+            updateBehavioralTelemetry();
+        });
+
+        // ==================== 2. Browser Fingerprinting ====================
+        function collectBrowserFingerprint() {
+            const fingerprint = {
+                'User Agent': navigator.userAgent,
+                'Platform': navigator.platform,
+                'Language': navigator.language,
+                'Languages': navigator.languages ? navigator.languages.join(', ') : 'N/A',
+                'Screen Resolution': `${screen.width} x ${screen.height}`,
+                'Available Resolution': `${screen.availWidth} x ${screen.availHeight}`,
+                'Color Depth': `${screen.colorDepth} bits`,
+                'Pixel Depth': `${screen.pixelDepth} bits`,
+                'Window Size': `${window.innerWidth} x ${window.innerHeight}`,
+                'Device Pixel Ratio': window.devicePixelRatio,
+                'Touch Support': 'ontouchstart' in window || navigator.maxTouchPoints > 0,
+                'Hardware Concurrency': navigator.hardwareConcurrency || 'N/A',
+                'Device Memory': navigator.deviceMemory ? `${navigator.deviceMemory} GB` : 'N/A',
+                'Connection Type': navigator.connection ? navigator.connection.effectiveType : 'N/A',
+                'Timezone': Intl.DateTimeFormat().resolvedOptions().timeZone,
+                'Timezone Offset': new Date().getTimezoneOffset(),
+                'Canvas Support': !!document.createElement('canvas').getContext,
+                'WebGL Vendor': getWebGLInfo().vendor,
+                'WebGL Renderer': getWebGLInfo().renderer,
+                'Cookies Enabled': navigator.cookieEnabled,
+                'Do Not Track': navigator.doNotTrack || 'N/A',
+                'PDF Viewer': navigator.pdfViewerEnabled || 'N/A'
+            };
+            
+            return fingerprint;
+        }
+
+        function getWebGLInfo() {
+            try {
+                const canvas = document.createElement('canvas');
+                const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                if (gl) {
+                    const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                    return {
+                        vendor: debugInfo ? gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) : 'N/A',
+                        renderer: debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : 'N/A'
+                    };
+                }
+            } catch (e) {
+                return { vendor: 'N/A', renderer: 'N/A' };
+            }
+            return { vendor: 'N/A', renderer: 'N/A' };
+        }
+
+        function detectAnomalies(fingerprint) {
+            let anomalyCount = 0;
+            let totalChecks = 0;
+            
+            // Check for screen/window mismatches (common in RDP)
+            const screenWidth = screen.width;
+            const windowWidth = window.innerWidth;
+            if (Math.abs(screenWidth - windowWidth) > 100) {
+                anomalyCount++;
+                addToEventLog('Screen/window size mismatch detected', 'warning');
+            }
+            totalChecks++;
+            
+            // Check for unusual color depth
+            if (screen.colorDepth < 24) {
+                anomalyCount++;
+                addToEventLog('Unusual color depth detected', 'warning');
+            }
+            totalChecks++;
+            
+            // Check for suspicious user agent patterns
+            const ua = navigator.userAgent.toLowerCase();
+            if (ua.includes('remote') || ua.includes('rdp') || ua.includes('vnc')) {
+                anomalyCount++;
+                addToEventLog('Suspicious user agent detected', 'warning');
+            }
+            totalChecks++;
+            
+            // Check for unusual device pixel ratio
+            if (window.devicePixelRatio !== 1 && window.devicePixelRatio !== 2 && window.devicePixelRatio !== 1.5) {
+                anomalyCount++;
+            }
+            totalChecks++;
+            
+            // Check hardware concurrency
+            if (navigator.hardwareConcurrency && navigator.hardwareConcurrency === 1) {
+                anomalyCount++;
+            }
+            totalChecks++;
+            
+            return Math.round((anomalyCount / totalChecks) * 100);
+        }
+
+        function displayBrowserFingerprint() {
+            const fingerprint = collectBrowserFingerprint();
+            const table = document.getElementById('fingerprintTable');
+            
+            table.innerHTML = '';
+            for (const [key, value] of Object.entries(fingerprint)) {
+                const row = table.insertRow();
+                const cell1 = row.insertCell(0);
+                const cell2 = row.insertCell(1);
+                cell1.textContent = key;
+                cell2.textContent = value;
+            }
+            
+            const anomalyScore = detectAnomalies(fingerprint);
+            document.getElementById('anomalyScore').textContent = anomalyScore + '%';
+            
+            const alertDiv = document.getElementById('fingerprintAlert');
+            if (anomalyScore > 60) {
+                alertDiv.innerHTML = '<div class="alert alert-danger">⚠️ Multiple anomalies detected in browser fingerprint!</div>';
+            } else if (anomalyScore > 30) {
+                alertDiv.innerHTML = '<div class="alert alert-warning">⚡ Some anomalies detected</div>';
+            } else {
+                alertDiv.innerHTML = '<div class="alert alert-success">✓ Fingerprint appears normal</div>';
+            }
+        }
+
+        // ==================== 3. Domain & API Detection ====================
+        function checkKnownDomains() {
+            const currentDomain = window.location.hostname;
+            const protocol = window.location.protocol;
+            
+            document.getElementById('currentDomain').textContent = currentDomain || 'localhost';
+            document.getElementById('protocol').textContent = protocol;
+            
+            // Check if current domain matches known RDP domains
+            let isKnownRDP = false;
+            for (const rdpDomain of knownRDPDomains) {
+                if (currentDomain.includes(rdpDomain)) {
+                    isKnownRDP = true;
+                    break;
+                }
+            }
+            
+            const statusIndicator = document.getElementById('domainStatus');
+            const alertDiv = document.getElementById('domainAlert');
+            
+            if (isKnownRDP) {
+                document.getElementById('isKnownDomain').textContent = '⚠️ YES';
+                document.getElementById('riskLevel').innerHTML = '<span class="risk-badge risk-high">HIGH RISK</span>';
+                statusIndicator.className = 'status-indicator status-danger';
+                alertDiv.innerHTML = '<div class="alert alert-danger">🚨 DETECTED: Known remote desktop domain!</div>';
+                addToEventLog('Known RDP domain detected: ' + currentDomain, 'danger');
+            } else if (currentDomain === 'localhost' || currentDomain === '127.0.0.1' || currentDomain === '') {
+                document.getElementById('isKnownDomain').textContent = '✓ No (Local)';
+                document.getElementById('riskLevel').innerHTML = '<span class="risk-badge risk-low">LOW RISK</span>';
+                statusIndicator.className = 'status-indicator status-active';
+                alertDiv.innerHTML = '<div class="alert alert-success">✓ Running on local domain</div>';
+            } else {
+                document.getElementById('isKnownDomain').textContent = '✓ No';
+                document.getElementById('riskLevel').innerHTML = '<span class="risk-badge risk-low">LOW RISK</span>';
+                statusIndicator.className = 'status-indicator status-active';
+                alertDiv.innerHTML = '<div class="alert alert-success">✓ Domain not in known RDP list</div>';
+            }
+            
+            // Display known domains list
+            const domainsList = document.getElementById('knownDomainsList');
+            domainsList.innerHTML = knownRDPDomains.map(domain => `• ${domain}`).join('<br>');
+        }
+
+        // ==================== Overall Risk Assessment ====================
+        function updateOverallRiskAssessment() {
+            const automationScore = analyzeAutomation();
+            const anomalyScore = detectAnomalies(collectBrowserFingerprint());
+            
+            // Check domain risk
+            let domainRisk = 0;
+            const currentDomain = window.location.hostname;
+            for (const rdpDomain of knownRDPDomains) {
+                if (currentDomain.includes(rdpDomain)) {
+                    domainRisk = 100;
+                    break;
+                }
+            }
+            
+            // Calculate overall risk (weighted average)
+            const overallRisk = Math.round((automationScore * 0.4 + anomalyScore * 0.3 + domainRisk * 0.3));
+            
+            const riskText = document.getElementById('overallRiskText');
+            const riskBadge = document.getElementById('overallRiskBadge');
+            const riskProgress = document.getElementById('riskProgress');
+            const riskDescription = document.getElementById('riskDescription');
+            const overallStatus = document.getElementById('overallStatus');
+            const overallAlert = document.getElementById('overallAlert');
+            
+            riskProgress.style.width = overallRisk + '%';
+            
+            if (overallRisk >= 70) {
+                riskText.textContent = 'HIGH RISK';
+                riskBadge.innerHTML = '<span class="risk-badge risk-high">🚨 CRITICAL: Remote Access Likely</span>';
+                riskDescription.textContent = 'Multiple indicators suggest remote desktop or automated control. Immediate investigation recommended.';
+                overallStatus.className = 'status-indicator status-danger';
+                overallAlert.innerHTML = '<div class="alert alert-danger">⚠️ HIGH RISK: Multiple detection systems flagged suspicious activity!</div>';
+            } else if (overallRisk >= 40) {
+                riskText.textContent = 'MODERATE RISK';
+                riskBadge.innerHTML = '<span class="risk-badge risk-medium">⚡ WARNING: Suspicious Activity</span>';
+                riskDescription.textContent = 'Some indicators suggest unusual behavior. Continue monitoring for additional evidence.';
+                overallStatus.className = 'status-indicator status-warning';
+                overallAlert.innerHTML = '<div class="alert alert-warning">⚡ MODERATE RISK: Some suspicious indicators detected</div>';
+            } else {
+                riskText.textContent = 'LOW RISK';
+                riskBadge.innerHTML = '<span class="risk-badge risk-low">✓ Normal Activity</span>';
+                riskDescription.textContent = 'No significant indicators of remote desktop or automation detected. User behavior appears normal.';
+                overallStatus.className = 'status-indicator status-active';
+                overallAlert.innerHTML = '<div class="alert alert-success">✓ LOW RISK: No significant threats detected</div>';
+            }
+        }
+
+        // ==================== Control Functions ====================
+        function resetAnalysis() {
+            keyboardEventTimestamps = [];
+            mouseEventTimestamps = [];
+            keyboardEventCount = 0;
+            mouseEventCount = 0;
+            burstPatternCount = 0;
+            eventLog = [];
+            
+            document.getElementById('eventLog').innerHTML = '<div class="event-entry"><span class="event-time">[System Reset]</span> Analysis reset. Monitoring restarted...</div>';
+            
+            updateBehavioralTelemetry();
+            displayBrowserFingerprint();
+            checkKnownDomains();
+            updateOverallRiskAssessment();
+            
+            addToEventLog('System reset - all counters cleared', 'info');
+        }
+
+        function exportReport() {
+            const report = {
+                timestamp: new Date().toISOString(),
+                behavioral: {
+                    keyboardEvents: keyboardEventCount,
+                    mouseEvents: mouseEventCount,
+                    burstPatterns: burstPatternCount,
+                    automationScore: analyzeAutomation()
+                },
+                fingerprint: collectBrowserFingerprint(),
+                anomalyScore: detectAnomalies(collectBrowserFingerprint()),
+                domain: {
+                    current: window.location.hostname,
+                    protocol: window.location.protocol,
+                    isKnownRDP: knownRDPDomains.some(d => window.location.hostname.includes(d))
+                },
+                eventLog: eventLog
+            };
+            
+            const dataStr = JSON.stringify(report, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `rdp-detection-report-${Date.now()}.json`;
+            link.click();
+            
+            addToEventLog('Report exported successfully', 'info');
+        }
+
+        function toggleMonitoring() {
+            monitoringActive = !monitoringActive;
+            const buttonText = document.getElementById('monitoringButtonText');
+            
+            if (monitoringActive) {
+                buttonText.textContent = '⏸️ Pause Monitoring';
+                addToEventLog('Monitoring resumed', 'info');
+            } else {
+                buttonText.textContent = '▶️ Resume Monitoring';
+                addToEventLog('Monitoring paused', 'info');
+            }
+        }
+
+        // ==================== Initialization ====================
+        function initialize() {
+            displayBrowserFingerprint();
+            checkKnownDomains();
+            updateBehavioralTelemetry();
+            updateOverallRiskAssessment();
+            
+            addToEventLog('All detection systems initialized', 'info');
+            
+            // Update overall risk every 5 seconds
+            setInterval(updateOverallRiskAssessment, 5000);
+        }
+
+        // Start the system when page loads
+        window.addEventListener('load', initialize);
+    </script>
+</body>
+</html>
+
